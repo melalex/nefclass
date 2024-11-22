@@ -9,7 +9,7 @@ from lib.util.feedback import TrainFeedback
 from torch import nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-from sklearn.metrics import f1_score, accuracy_score
+from sklearn.metrics import f1_score
 
 
 class ClassificationTrainer:
@@ -53,7 +53,7 @@ class ClassificationTrainer:
 
                     y_pred = self.__extract_prediction(outputs.data)
 
-                    accuracy = accuracy_score(y_true, y_pred)
+                    accuracy = self.__calculate_accuracy(y_true, y_pred)
 
                     train_total_accuracy += accuracy
 
@@ -138,8 +138,8 @@ class ClassificationTrainer:
                 outputs = model(x)
                 total_loss += loss_fun(outputs, y).item()
                 y_predicted = self.__extract_prediction(outputs.data)
-                total_accuracy += accuracy_score(y, y_predicted)
-                total_f1 += f1_score(y, y_predicted)
+                total_accuracy += self.__calculate_accuracy(y, y_predicted)
+                total_f1 += f1_score(y.cpu(), y_predicted.cpu())
 
                 if record_class_stats:
                     if confusion_matrix is None:
@@ -158,7 +158,7 @@ class ClassificationTrainer:
                 confusion_matrix,
             )
 
-    def __calculate_accuracy(self, y_predicted: torch.Tensor, y_true: torch.Tensor):
+    def __calculate_accuracy(self, y_true: torch.Tensor, y_predicted: torch.Tensor):
         return (y_predicted == y_true).sum().item() / y_true.size(0)
 
     def __extract_prediction(self, y_predicted: torch.Tensor):
