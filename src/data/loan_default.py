@@ -1,7 +1,8 @@
 import logging
 
 import pandas as pd
-from src.data.util.dataset import download_dataset, unzip_file
+from lib.data.kaggle import download_dataset, unzip_file
+from lib.data.util import scale_df
 from src.definitions import EXTERNAL_DATA_FOLDER
 
 
@@ -30,16 +31,6 @@ def create_loan_default_df(
 
     return df
 
-    # df = df.drop(columns=["LoanID"])
 
-    # to_int = {"Yes": 1, "No": 0}
-
-    # df["HasMortgage"] = df["HasMortgage"].map(to_int)
-    # df["HasDependents"] = df["HasDependents"].map(to_int)
-    # df["HasCoSigner"] = df["HasCoSigner"].map(to_int)
-
-    # return pd.get_dummies(
-    #     df,
-    #     columns=["Education", "EmploymentType", "MaritalStatus", "LoanPurpose"],
-    #     dtype=int,
-    # )
+def scale_loan_default_df(df: pd.DataFrame) -> pd.DataFrame:
+    return scale_df(df=df, ignore_columns=["education", "self_employed", "loan_status"])

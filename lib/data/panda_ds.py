@@ -4,13 +4,13 @@ import torch
 from torch.utils.data import Dataset
 
 
-class PandasDs(Dataset):
+class PandasClsDs(Dataset):
     __x: torch.Tensor
     __y: torch.Tensor
 
     def __init__(self, x: DataFrame, y: DataFrame) -> None:
-        self.__x = torch.tensor(x.values)
-        self.__y = torch.tensor(y.values)
+        self.__x = torch.tensor(x.values, dtype=torch.float32)
+        self.__y = torch.tensor(y.values, dtype=torch.int)
 
     def __getitem__(self, index):
         return self.__x[index].T, self.__y[index]

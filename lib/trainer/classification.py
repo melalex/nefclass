@@ -2,12 +2,14 @@ import copy
 from typing import Optional
 
 import numpy as np
+import sklearn
 import torch
 from tqdm import tqdm
 from lib.util.feedback import TrainFeedback
 from torch import nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from sklearn.metrics import f1_score, accuracy_score
 
 
 class ClassificationTrainer:
@@ -51,7 +53,7 @@ class ClassificationTrainer:
 
                     y_pred = self.__extract_prediction(outputs.data)
 
-                    accuracy = self.__calculate_accuracy(y_pred, y_true)
+                    accuracy = accuracy_score(y_true, y_pred)
 
                     train_total_accuracy += accuracy
 
@@ -76,7 +78,9 @@ class ClassificationTrainer:
                 train_loss_history.append(train_avg_loss)
                 train_accuracy_history.append(train_avg_accuracy)
 
-                valid_loss, valid_accuracy, _ = self.eval(model, loss_fun, valid_loader)
+                valid_loss, valid_accuracy, valid_f1, _ = self.eval(
+                    model, loss_fun, valid_loader
+                )
 
                 valid_accuracy_history.append(valid_accuracy)
                 valid_loss_history.append(valid_loss)
@@ -86,6 +90,7 @@ class ClassificationTrainer:
                     "accuracy": train_avg_accuracy,
                     "valid_loss": valid_loss,
                     "valid_accuracy": valid_accuracy,
+                    "valid_f1": valid_f1,
                 }
 
                 # Early stopping
@@ -123,6 +128,7 @@ class ClassificationTrainer:
         with torch.no_grad():
             total_loss = 0
             total_accuracy = 0
+            total_f1 = 0
             batch_count = len(loader)
             confusion_matrix = None
 
@@ -132,11 +138,12 @@ class ClassificationTrainer:
                 outputs = model(x)
                 total_loss += loss_fun(outputs, y).item()
                 y_predicted = self.__extract_prediction(outputs.data)
-                total_accuracy += self.__calculate_accuracy(y_predicted, y)
+                total_accuracy += accuracy_score(y, y_predicted)
+                total_f1 += f1_score(y, y_predicted)
 
                 if record_class_stats:
                     if confusion_matrix is None:
-                        num_classes = y.shape[1]
+                        num_classes = outputs.data.shape[1]
                         confusion_matrix = np.zeros(
                             (num_classes, num_classes), dtype=np.uint8
                         )
@@ -147,6 +154,7 @@ class ClassificationTrainer:
             return (
                 total_loss / batch_count,
                 total_accuracy / batch_count,
+                total_f1 / batch_count,
                 confusion_matrix,
             )
 

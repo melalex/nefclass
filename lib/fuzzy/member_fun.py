@@ -1,8 +1,65 @@
+from dataclasses import dataclass
 from typing import Callable
 import numpy as np
 import torch
 
 from torch import nn, Tensor
+
+
+class MemberFunDef:
+
+    def compile(self) -> nn.Module:
+        pass
+
+    def scale(self, mean: float, std: float) -> None:
+        pass
+
+
+@dataclass
+class GaussMfDef(MemberFunDef):
+    mean: float
+    std: float
+
+    def compile(self) -> nn.Module:
+        return GaussMf(self.mean, self.std)
+
+    def scale(self, mean: float, std: float) -> None:
+        self.mean = (self.mean - mean) / std
+        self.std = self.std / std
+
+
+@dataclass
+class SingletonMfDef(MemberFunDef):
+    value: float
+
+    def compile(self) -> nn.Module:
+        return SingletonMf(self.value)
+
+
+@dataclass
+class SShapedMfDef(MemberFunDef):
+    a: float
+    b: float
+
+    def compile(self) -> nn.Module:
+        return SShapedMf(self.a, self.b)
+
+    def scale(self, mean: float, std: float) -> None:
+        self.a = (self.a - mean) / std
+        self.b = (self.b - mean) / std
+
+
+@dataclass
+class ZShapedMfDef(MemberFunDef):
+    a: float
+    b: float
+
+    def compile(self) -> nn.Module:
+        return ZShapedMf(self.a, self.b)
+
+    def scale(self, mean: float, std: float) -> None:
+        self.a = (self.a - mean) / std
+        self.b = (self.b - mean) / std
 
 
 class GaussMf(nn.Module):
